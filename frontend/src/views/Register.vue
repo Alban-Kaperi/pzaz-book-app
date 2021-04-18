@@ -54,8 +54,8 @@
 </template>
 
 <script>
-// @ is an alias to /src
-//import HelloWorld from "@/components/HelloWorld.vue";
+import axios from "axios";
+import { mapMutations } from "vuex";
 
 export default {
   name: "Home",
@@ -74,11 +74,10 @@ export default {
     };
     return {
       ruleForm: {
-        username: "",
+        name: "",
         email: "",
         pass: "",
         checkPass: "",
-        age: "",
       },
       rules: {
         name: [
@@ -124,10 +123,53 @@ export default {
     };
   },
   methods: {
+    ...mapMutations,
+    initializeBooks(value) {
+      this.$store.commit("initBooksArray", value);
+    },
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
+        // if it passes validation
         if (valid) {
-          alert("submit!");
+          axios
+            .post("http://localhost:3000/api/user/register", {
+              name: this.ruleForm.name,
+              email: this.ruleForm.email,
+              password: this.ruleForm.pass,
+              checkPass: this.ruleForm.checkPass,
+            })
+            .then((response) => {
+              // get the jwt token from the header
+              const authToken = response.headers["auth-token"];
+              // set auth token to the local storage.
+              localStorage.setItem("jwt", authToken);
+
+              // Time expires after getTokenExpiration miliseconds we get from vuex store
+              const expirationDate =
+                new Date().getTime() + this.getTokenExpiration;
+
+              // set jwtExpired in the local storage
+              localStorage.setItem("jwtExpired", expirationDate);
+
+              // we initialize books array in vuex with the help of initBooksArray method
+              this.initBooksArray(localStorage.getItem("jwt"));
+
+              // set user isLogged to true
+              this.setLogState(true);
+
+              // redirected to the books route
+              this.$router.push({ name: "books" });
+            })
+            .catch(function (error) {
+              console.log(error);
+            });
+
+          // notify with succes message that data is succesfully sent to server.
+          this.$notify.success({
+            title: "Success",
+            message: "User succesfully logged in",
+            offset: 100,
+          });
         } else {
           console.log("error submit!!");
           return false;
@@ -136,6 +178,24 @@ export default {
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
+    },
+    initBooksArray(jwtToken) {
+      axios
+        .get("http://localhost:3000/api/books/", {
+          headers: {
+            "auth-token": jwtToken,
+          },
+        })
+        .then((response) => {
+          // initialize the books array in the vuex store with the books of the database.
+          this.initializeBooks(response.data);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    },
+    setLogState(value) {
+      this.$store.commit("setLogged", value);
     },
   },
 };

@@ -22,12 +22,6 @@ const routes = [
     component: () =>
       import(/* webpackChunkName: "booklist" */ "../views/BookList.vue"),
   },
-  {
-    path: "/book/:id",
-    name: "deletebook",
-    component: () =>
-      import(/* webpackChunkName: "booklist" */ "../views/BookDelete.vue"),
-  },
 ];
 
 const router = createRouter({

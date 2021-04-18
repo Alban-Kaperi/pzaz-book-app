@@ -44,12 +44,11 @@
     </el-header>
     <el-main>
       <el-row type="flex" class="row-bg" justify="center">
-        <el-col :lg="16" :xl="16">
+        <el-col :lg="20" :xl="20">
           <router-view />
         </el-col>
       </el-row>
     </el-main>
-    <el-footer>Footer</el-footer>
   </el-container>
 </template>
 

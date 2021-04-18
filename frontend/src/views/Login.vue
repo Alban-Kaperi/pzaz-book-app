@@ -52,37 +52,12 @@ import { mapGetters, mapMutations } from "vuex";
 export default {
   name: "Login",
   data() {
-    var validatePass2 = (rule, value, callback) => {
-      if (value === "") {
-        callback(new Error("Please input the password again"));
-      } else if (value !== this.ruleForm.pass) {
-        callback(new Error("Two inputs don't match!"));
-      } else {
-        callback();
-      }
-    };
     return {
       ruleForm: {
-        username: "",
         email: "",
         pass: "",
-        checkPass: "",
-        age: "",
       },
       rules: {
-        name: [
-          {
-            type: "string",
-            required: true,
-            message: "Please input name",
-            trigger: "blur",
-          },
-          {
-            min: 3,
-            message: "Length should be above 3 characters",
-            trigger: "blur",
-          },
-        ],
         email: [
           {
             type: "email",
@@ -108,12 +83,11 @@ export default {
             trigger: "blur",
           },
         ],
-        checkPass: [{ validator: validatePass2, trigger: "blur" }],
       },
     };
   },
   computed: {
-    ...mapGetters(["getTokenExpiration"]), // get the array of books
+    ...mapGetters(["getTokenExpiration"]), // get token expiraton time from vuex
   },
   methods: {
     ...mapMutations,
@@ -142,7 +116,7 @@ export default {
               // set jwtExpired in the local storage
               localStorage.setItem("jwtExpired", expirationDate);
 
-              // we initialize books array in vuex
+              // we initialize books array in vuex with the help of initBooksArray method
               this.initBooksArray(localStorage.getItem("jwt"));
 
               // set user isLogged to true

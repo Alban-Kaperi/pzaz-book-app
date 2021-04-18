@@ -22,19 +22,26 @@ export default createStore({
     },
   },
   mutations: {
-    setToken(state, value){
+    setToken(state, value) {
       state.token = value;
     },
-    initBooksArray(state, value){
+    initBooksArray(state, value) {
       state.books = value;
     },
-    addBook(state, value){
-      state.books.push(value);
+    addBook(state, item) {
+      state.books.push(item);
     },
-    removeBook(state, value){
+    updateBook(state, item) {
+      state.books.forEach((element, index) => {
+        if (element.id === item.id) {
+          state.books[index] = item;
+        }
+      });
+    },
+    removeBook(state, value) {
       state.books = state.books.filter((arrayitem) => arrayitem.isbn !== value);
     },
-    setLogged(state, value){
+    setLogged(state, value) {
       state.isLogged = value;
     },
   },
