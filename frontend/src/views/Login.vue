@@ -91,9 +91,6 @@ export default {
   },
   methods: {
     ...mapMutations,
-    initializeBooks(value) {
-      this.$store.commit("initBooksArray", value);
-    },
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
         // if it passes validation
@@ -104,12 +101,19 @@ export default {
               password: this.ruleForm.pass,
             })
             .then((response) => {
+              // clear all previous information form local storage
+              localStorage.clear();
+
+              // clear info in in vuex state.
+              this.$store.commit("emptySate");
+
               // get the jwt token from the header
               const authToken = response.headers["auth-token"];
+
               // set auth token to the local storage.
               localStorage.setItem("jwt", authToken);
 
-              // Time expires after getTokenExpiration miliseconds we get from vuex store
+              // calculate expiration time
               const expirationDate =
                 new Date().getTime() + this.getTokenExpiration;
 
@@ -119,7 +123,7 @@ export default {
               // we initialize books array in vuex with the help of initBooksArray method
               this.initBooksArray(localStorage.getItem("jwt"));
 
-              // set user isLogged to true
+              // set user isLogged to true in vuex store
               this.setLogState(true);
 
               // redirected to the books route
@@ -153,7 +157,7 @@ export default {
         })
         .then((response) => {
           // initialize the books array in the vuex store with the books of the database.
-          this.initializeBooks(response.data);
+          this.$store.commit("initBooksArray", response.data);
         })
         .catch(function (error) {
           console.log(error);

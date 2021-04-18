@@ -63,21 +63,11 @@ export default {
     //HelloWorld,
   },
   data() {
-    var validatePass2 = (rule, value, callback) => {
-      if (value === "") {
-        callback(new Error("Please input the password again"));
-      } else if (value !== this.ruleForm.pass) {
-        callback(new Error("Two inputs don't match!"));
-      } else {
-        callback();
-      }
-    };
     return {
       ruleForm: {
         name: "",
         email: "",
         pass: "",
-        checkPass: "",
       },
       rules: {
         name: [
@@ -118,7 +108,6 @@ export default {
             trigger: "blur",
           },
         ],
-        checkPass: [{ validator: validatePass2, trigger: "blur" }],
       },
     };
   },
@@ -136,26 +125,32 @@ export default {
               name: this.ruleForm.name,
               email: this.ruleForm.email,
               password: this.ruleForm.pass,
-              checkPass: this.ruleForm.checkPass,
             })
             .then((response) => {
-              // get the jwt token from the header
-              const authToken = response.headers["auth-token"];
-              // set auth token to the local storage.
-              localStorage.setItem("jwt", authToken);
+              // clear all previous information form local storage
+              localStorage.clear();
 
-              // Time expires after getTokenExpiration miliseconds we get from vuex store
+              // clear previous info in in vuex state.
+              this.$store.commit("emptySate");
+
+              // set auth token to the local storage.
+              localStorage.setItem("jwt", response.headers["auth-token"]);
+
+              // Time expires, we get from vuex store
               const expirationDate =
                 new Date().getTime() + this.getTokenExpiration;
 
               // set jwtExpired in the local storage
               localStorage.setItem("jwtExpired", expirationDate);
 
-              // we initialize books array in vuex with the help of initBooksArray method
-              this.initBooksArray(localStorage.getItem("jwt"));
-
-              // set user isLogged to true
+              // set user isLogged to true in vuex store
               this.setLogState(true);
+
+              // show succesful message
+              this.$message({
+                type: "success",
+                message: "User succesfully created",
+              });
 
               // redirected to the books route
               this.$router.push({ name: "books" });
@@ -178,21 +173,6 @@ export default {
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
-    },
-    initBooksArray(jwtToken) {
-      axios
-        .get("http://localhost:3000/api/books/", {
-          headers: {
-            "auth-token": jwtToken,
-          },
-        })
-        .then((response) => {
-          // initialize the books array in the vuex store with the books of the database.
-          this.initializeBooks(response.data);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
     },
     setLogState(value) {
       this.$store.commit("setLogged", value);

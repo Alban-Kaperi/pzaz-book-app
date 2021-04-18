@@ -2,6 +2,10 @@ import { createStore } from "vuex";
 
 export default createStore({
   state: {
+    /*
+     * token and isLogged are for optional configurations
+     * in case we dont want to use the localStorage
+     */
     token: "",
     isLogged: false,
     tokenExpiration: 60 * 60 * 1000, // we will set it to 1hour(60min*60sec*1000ms)
@@ -43,6 +47,11 @@ export default createStore({
     },
     setLogged(state, value) {
       state.isLogged = value;
+    },
+    emptySate(state) {
+      state.books = [];
+      state.token = "";
+      state.isLogged = false;
     },
   },
   actions: {},

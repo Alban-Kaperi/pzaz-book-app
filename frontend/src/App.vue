@@ -1,5 +1,5 @@
 <template>
-  <el-container style="font-family: 'Open Sans', sans-serif;">
+  <el-container style="font-family: 'Open Sans', sans-serif">
     <el-header>
       <el-menu
         :default-active="activeIndex"
@@ -89,8 +89,11 @@ export default {
     logout() {
       // logout the user
       this.$store.commit("setLogged", false);
-      // clear user info
+      // clear user info if we have been logged before
       localStorage.clear();
+
+      // clear books array in vuex
+      this.$store.commit("emptyBooksArray");
     },
   },
   created() {
@@ -101,10 +104,11 @@ export default {
     if (jwtToken && jwtTokenTime > currentTime) {
       // Initialize books array at vuex
       this.initializeBooks(jwtToken);
-      // set user isLogged to true
+
+      // set user isLogged to true in vuex
       this.setLogState(true);
     } else {
-      // set user isLogged to false
+      // set user isLogged to false in vuex
       this.setLogState(false);
       // redirected to the books route
       this.$router.push({ name: "login" });

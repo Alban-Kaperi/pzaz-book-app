@@ -18,7 +18,7 @@
           type="warning"
           icon="el-icon-edit"
           @click="
-            editBook(
+            editTableRowBook(
               scope.$index,
               scope.row._id,
               scope.row.title,
@@ -31,7 +31,9 @@
           >Edit</el-button
         >
         <el-button
-          @click.prevent="deleteBook(scope.$index, scope.row.isbn, getBooks)"
+          @click.prevent="
+            deleteBook(scope.$index, scope.row._id, scope.row.isbn, getBooks)
+          "
           type="danger"
           icon="el-icon-delete"
           >delete</el-button
@@ -84,7 +86,8 @@ export default {
       dialogFormVisible: false,
       itemIndex: null, // index of the item in the array
       form: {
-        id: "",
+        //book form
+        id: "", //book id
         title: "",
         description: "",
         author: "",
@@ -99,7 +102,7 @@ export default {
   },
   methods: {
     ...mapMutations,
-    deleteBook(index, isbn, tablebooks) {
+    deleteBook(index, bookId, isbn, tablebooks) {
       this.$confirm(
         "This will permanently delete the book. Continue?",
         "Warning",
@@ -111,27 +114,45 @@ export default {
         }
       )
         .then(() => {
-          //axios.
-          // remove row from table
-          tablebooks.splice(index, 1);
-          // remove book from array in vuex
-          this.$store.commit("removeBook", isbn);
-          this.$message({
-            type: "success",
-            message: "Delete completed",
-          });
+          axios
+            .delete(`http://localhost:3000/api/books/${bookId}`, {
+              headers: {
+                "auth-token": localStorage.getItem("jwt"),
+              },
+            })
+            .then(() => {
+              // remove row from table
+              tablebooks.splice(index, 1);
+              // remove book from array in vuex
+              this.$store.commit("removeBook", isbn);
+
+              // show succesful message
+              this.$message({
+                type: "success",
+                message: "Delete completed",
+              });
+            })
+            .catch(function () {
+              this.$message({
+                type: "error",
+                message: "Delete canceled!",
+              });
+            });
         })
         .catch(() => {
           this.$message({
-            type: "info",
-            message: "Delete canceled",
+            type: "error",
+            message: "Delete canceled!",
           });
         });
     },
-    editBook(index, id, title, author, description, image, isbn) {
+    editTableRowBook(index, id, title, author, description, image, isbn) {
+      console.log(title);
       // show dialog box
       this.dialogFormVisible = true;
+      // get row index
       this.itemIndex = index;
+      // get book data from table
       this.form.id = id;
       this.form.title = title;
       this.form.author = author;
@@ -140,33 +161,26 @@ export default {
       this.form.isbn = isbn;
     },
     updateBook() {
-      const formData = this.form;
       axios
-        .put(`http://localhost:3000/api/books/${this.form.id}`, formData, {
+        .put(`http://localhost:3000/api/books/${this.form.id}`, this.form, {
           headers: {
             "auth-token": localStorage.getItem("jwt"),
           },
         })
         .then(() => {
           //update table row in current view
+          //first we need to remove the reference to this.form
+          const formData = JSON.parse(JSON.stringify(this.form));
           this.getBooks[this.itemIndex] = formData;
           // update the book in vuex books array
           this.$store.commit("updateBook", formData);
           // close the dialog box
           this.dialogFormVisible = false;
 
-          // empty the form data
-          // this.form.id = "";
-          // this.form.title = "";
-          // this.form.description = "";
-          // this.form.author = "";
-          // this.form.isbn = "";
-          // this.form.poster_image = "";
-
           // show succesful message
           this.$message({
             type: "success",
-            message: "Delete completed",
+            message: "Update completed!",
           });
         })
         .catch(function () {
@@ -177,7 +191,15 @@ export default {
         });
     },
   },
+  mounted() {
+    const jwtToken = localStorage.getItem("jwt"); // get token from local storage
+    const currentTime = new Date().getTime(); // get current time in milliseconds
+    const jwtTokenTime = localStorage.getItem("jwtExpired"); //get expiration time from l. storage
+    //we check if we dont have a token or it has expired
+    if (!(jwtToken || jwtTokenTime > currentTime)) {
+      // redirect to login page
+      this.$router.push({ name: "login" });
+    }
+  },
 };
 </script>
-
-<style></style>
