@@ -5,7 +5,7 @@ const Book = require("../model/Book.js");
 router.get("/", async(req, res)=>{
 
     try {
-        const allBooks = await Book.find();//find all books
+        const allBooks = await Book.find({"user_id": req.user._id});//find all books of the user
         return res.json(allBooks);
       } catch (error) {
         return res.status(400).send(error);
@@ -53,7 +53,7 @@ router.put("/:bookID", async(req, res)=>{
 
     try {
         const updatedBook = await Book.updateOne(
-          { _id: req.params.bookID },//find the id
+          { _id: req.params.bookID},//find by book id
           { $set: { //update the field
                 author:req.body.author,
                 title:req.body.title,
@@ -73,7 +73,7 @@ router.put("/:bookID", async(req, res)=>{
 router.delete("/:bookID", async(req, res)=>{
 
     try {
-        const deletedBook = await Book.remove({ _id: req.params.bookID });
+        const deletedBook = await Book.deleteOne({ _id: req.params.bookID});
         return res.send({"message":`Book: ${deletedBook.title} Sucessfuly deleted!`});
       } catch (error) {
         return res.status(400).send(error);

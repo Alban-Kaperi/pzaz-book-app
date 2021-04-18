@@ -2,7 +2,7 @@
 
 > NOTE: I had no previous knowledge about the component library "element-ui", so I had to repeatedly check their docs.
 
-## Technologies uses in the BACK-END
+## Technologies used in the BACK-END
 
 - Express JS
 - Mongo DB Cloud
@@ -14,7 +14,7 @@
 - NPM for package manager.
 - Middleware to check if user jwt has not expired before doing and CRUD operations on the Books.
 
-## Technologies uses in the FRONT-END
+## Technologies used in the FRONT-END
 
 - Vue JS version 3
 - Vuex

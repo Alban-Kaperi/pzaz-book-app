@@ -29,8 +29,12 @@ router.post("/register", async(req, res)=>{
 
     try {
         const savedUser= await user.save();
+        // create and assign jwt token, which expires in 3600 seconds
+        var token = jwt.sign({ _id: savedUser._id }, process.env.TOKEN_SECRET, { expiresIn: 60 * 60 });
+        res.header('auth-token', token);// we add the token to the header
+
         return res.send({
-            "message":"sucessfuly connected",
+            "message":"sucessfuly created",
             "userid":savedUser._id
         });        
     } catch (error) {
