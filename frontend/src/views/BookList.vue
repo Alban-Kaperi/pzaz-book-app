@@ -32,7 +32,11 @@
         >
         <el-button
           @click.prevent="
-            deleteBook(scope.$index, scope.row._id, scope.row.isbn, getBooks)
+            deleteBook({
+              index: scope.$index,
+              _id: scope.row._id,
+              isbn: scope.row.isbn,
+            })
           "
           type="danger"
           icon="el-icon-delete"
@@ -42,7 +46,7 @@
     </el-table-column>
   </el-table>
   <!-- edit form data -->
-  <el-dialog title="Edit Book Info" v-model="dialogFormVisible">
+  <el-dialog title="Edit Book Info" v-model="editDialogBookForm">
     <el-form :model="form">
       <el-form-item label="Title" :label-width="formLabelWidth">
         <el-input v-model="form.title" autocomplete="off"></el-input>
@@ -66,16 +70,15 @@
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="updateBook()">Confirm</el-button>
+        <el-button @click="editDialogBookForm = false">Cancel</el-button>
+        <el-button type="primary" @click="updateBookInDB()">Confirm</el-button>
       </span>
     </template>
   </el-dialog>
 </template>
 
 <script>
-import { mapGetters, mapMutations } from "vuex";
-import axios from "axios";
+import { mapGetters, mapActions } from "vuex";
 import BookAdd from "../components/BookAdd";
 export default {
   components: {
@@ -83,11 +86,11 @@ export default {
   },
   data() {
     return {
-      dialogFormVisible: false,
+      editDialogBookForm: false,
       itemIndex: null, // index of the item in the array
       form: {
         //book form
-        id: "", //book id
+        _id: "", //book _id
         title: "",
         description: "",
         author: "",
@@ -98,108 +101,40 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["getBooks"]), // get the array of books
+    ...mapGetters("books", ["getBooks"]), // get the array of books
   },
   methods: {
-    ...mapMutations,
-    deleteBook(index, bookId, isbn, tablebooks) {
-      this.$confirm(
-        "This will permanently delete the book. Continue?",
-        "Warning",
-        {
-          confirmButtonText: "OK",
-          cancelButtonText: "Cancel",
-          type: "warning",
-          center: true,
-        }
-      )
-        .then(() => {
-          axios
-            .delete(`http://localhost:3000/api/books/${bookId}`, {
-              headers: {
-                "auth-token": localStorage.getItem("jwt"),
-              },
-            })
-            .then(() => {
-              // remove row from table
-              tablebooks.splice(index, 1);
-              // remove book from array in vuex
-              this.$store.commit("removeBook", isbn);
-
-              // show succesful message
-              this.$message({
-                type: "success",
-                message: "Delete completed",
-              });
-            })
-            .catch(function () {
-              this.$message({
-                type: "error",
-                message: "Delete canceled!",
-              });
-            });
-        })
-        .catch(() => {
-          this.$message({
-            type: "error",
-            message: "Delete canceled!",
-          });
-        });
-    },
-    editTableRowBook(index, id, title, author, description, image, isbn) {
-      console.log(title);
+    ...mapActions("user", ["initBooksArray"]),
+    ...mapActions("books", [
+      "updateBook",
+      "setEditDialogBookForm",
+      "deleteBook",
+    ]),
+    editTableRowBook(index, _id, title, author, description, image, isbn) {
       // show dialog box
-      this.dialogFormVisible = true;
-      // get row index
+      this.editDialogBookForm = true;
+
       this.itemIndex = index;
       // get book data from table
-      this.form.id = id;
+      this.form._id = _id;
       this.form.title = title;
       this.form.author = author;
       this.form.description = description;
       this.form.poster_image = image;
       this.form.isbn = isbn;
     },
-    updateBook() {
-      axios
-        .put(`http://localhost:3000/api/books/${this.form.id}`, this.form, {
-          headers: {
-            "auth-token": localStorage.getItem("jwt"),
-          },
-        })
-        .then(() => {
-          //update table row in current view
-          //first we need to remove the reference to this.form
-          const formData = JSON.parse(JSON.stringify(this.form));
-          this.getBooks[this.itemIndex] = formData;
-          // update the book in vuex books array
-          this.$store.commit("updateBook", formData);
-          // close the dialog box
-          this.dialogFormVisible = false;
+    async updateBookInDB() {
+      //remove pointer from the form
+      const formData = JSON.parse(JSON.stringify(this.form));
+      // dispatch updateBook action
+      const response = await this.updateBook({ book: formData });
 
-          // show succesful message
-          this.$message({
-            type: "success",
-            message: "Update completed!",
-          });
-        })
-        .catch(function () {
-          this.$message({
-            type: "error",
-            message: "Not updated!",
-          });
-        });
+      // if the update is succesful than we close the dialog box
+      if (response) this.editDialogBookForm = false;
     },
   },
-  mounted() {
-    const jwtToken = localStorage.getItem("jwt"); // get token from local storage
-    const currentTime = new Date().getTime(); // get current time in milliseconds
-    const jwtTokenTime = localStorage.getItem("jwtExpired"); //get expiration time from l. storage
-    //we check if we dont have a token or it has expired
-    if (!(jwtToken || jwtTokenTime > currentTime)) {
-      // redirect to login page
-      this.$router.push({ name: "login" });
-    }
+  created() {
+    this.initBooksArray(localStorage.getItem("jwt"));
   },
 };
 </script>

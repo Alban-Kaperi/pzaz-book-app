@@ -5,7 +5,6 @@
         :default-active="activeIndex"
         class="el-menu-demo"
         mode="horizontal"
-        @select="handleSelect"
         background-color="#545c64"
         text-color="#fff"
         active-text-color="#ffd04b"
@@ -53,8 +52,7 @@
 </template>
 
 <script>
-const axios = require("axios");
-import { mapGetters, mapMutations } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   data() {
@@ -64,55 +62,10 @@ export default {
   },
   name: "MainPage",
   computed: {
-    ...mapGetters(["isLogged"]), // get true if user is logged in false if not
+    ...mapGetters("user", ["isLogged"]), // get true if user is logged in false if not
   },
   methods: {
-    ...mapMutations,
-    initializeBooks(jwtToken) {
-      axios
-        .get("http://localhost:3000/api/books/", {
-          headers: {
-            "auth-token": jwtToken,
-          },
-        })
-        .then((response) => {
-          // initialize the books array in the vuex store with the books of the database.
-          this.$store.commit("initBooksArray", response.data);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-    },
-    setLogState(value) {
-      this.$store.commit("setLogged", value);
-    },
-    logout() {
-      // logout the user
-      this.$store.commit("setLogged", false);
-      // clear user info if we have been logged before
-      localStorage.clear();
-
-      // clear books array in vuex
-      this.$store.commit("emptyBooksArray");
-    },
-  },
-  created() {
-    const jwtToken = localStorage.getItem("jwt"); // get token from local storage
-    const currentTime = new Date().getTime(); // get current time in milliseconds
-    const jwtTokenTime = localStorage.getItem("jwtExpired"); //get expiration time from l. storage
-    //we check if we have a token and it has not expired
-    if (jwtToken && jwtTokenTime > currentTime) {
-      // Initialize books array at vuex
-      this.initializeBooks(jwtToken);
-
-      // set user isLogged to true in vuex
-      this.setLogState(true);
-    } else {
-      // set user isLogged to false in vuex
-      this.setLogState(false);
-      // redirected to the books route
-      this.$router.push({ name: "login" });
-    }
+    ...mapActions("user", ["logout"]),
   },
 };
 </script>

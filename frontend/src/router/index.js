@@ -29,4 +29,21 @@ const router = createRouter({
   routes,
 });
 
+// check if user is logged
+router.beforeEach((to, from, next) => {
+  const auth = isAuthenticated();
+  // if we want to go to books route but we are not authenticated, we redirect to login
+  if (to.name == ["books"] && !auth) next({ name: "login" });
+  else next();
+});
+
+function isAuthenticated() {
+  const jwtToken = localStorage.getItem("jwt"); // get token from local storage
+  const currentTime = new Date().getTime(); // get current time in milliseconds
+  const savedTime = localStorage.getItem("jwtExpiredTime"); //get expiration time from l. storage
+
+  if (jwtToken || savedTime > currentTime) return true;
+  else return false;
+}
+
 export default router;

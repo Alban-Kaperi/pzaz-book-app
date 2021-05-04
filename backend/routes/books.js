@@ -41,7 +41,12 @@ router.post("/", async(req, res)=>{
     try {
         const savedBook= await book.save();
         return res.send({
-            "message":`${savedBook.title} sucessfuly created!`,
+            _id: savedBook._id,
+            author: savedBook.author,
+            title: savedBook.title,
+            description: savedBook.description,
+            isbn: savedBook.isbn,
+            poster_image: savedBook.poster_image            
         });        
     } catch (error) {
         return res.status(400).send(error);

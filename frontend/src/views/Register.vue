@@ -54,8 +54,7 @@
 </template>
 
 <script>
-import axios from "axios";
-import { mapMutations } from "vuex";
+import { mapActions } from "vuex";
 
 export default {
   name: "Home",
@@ -112,70 +111,21 @@ export default {
     };
   },
   methods: {
-    ...mapMutations,
-    initializeBooks(value) {
-      this.$store.commit("initBooksArray", value);
-    },
+    // user module, register method
+    ...mapActions("user", ["register"]),
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
-        // if it passes validation
-        if (valid) {
-          axios
-            .post("http://localhost:3000/api/user/register", {
-              name: this.ruleForm.name,
-              email: this.ruleForm.email,
-              password: this.ruleForm.pass,
-            })
-            .then((response) => {
-              // clear all previous information form local storage
-              localStorage.clear();
-
-              // clear previous info in in vuex state.
-              this.$store.commit("emptySate");
-
-              // set auth token to the local storage.
-              localStorage.setItem("jwt", response.headers["auth-token"]);
-
-              // Time expires, we get from vuex store
-              const expirationDate =
-                new Date().getTime() + this.getTokenExpiration;
-
-              // set jwtExpired in the local storage
-              localStorage.setItem("jwtExpired", expirationDate);
-
-              // set user isLogged to true in vuex store
-              this.setLogState(true);
-
-              // show succesful message
-              this.$message({
-                type: "success",
-                message: "User succesfully created",
-              });
-
-              // redirected to the books route
-              this.$router.push({ name: "books" });
-            })
-            .catch(function (error) {
-              console.log(error);
-            });
-
-          // notify with succes message that data is succesfully sent to server.
-          this.$notify.success({
-            title: "Success",
-            message: "User succesfully logged in",
-            offset: 100,
-          });
-        } else {
-          console.log("error submit!!");
-          return false;
-        }
+        // dispatch register action
+        this.register({
+          valid: valid,
+          name: this.ruleForm.name,
+          email: this.ruleForm.email,
+          password: this.ruleForm.pass,
+        });
       });
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
-    },
-    setLogState(value) {
-      this.$store.commit("setLogged", value);
     },
   },
 };

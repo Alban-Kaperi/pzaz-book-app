@@ -46,8 +46,8 @@
 
 <script>
 // @ is an alias to /src
-const axios = require("axios");
-import { mapGetters, mapMutations } from "vuex";
+
+import { mapActions } from "vuex";
 
 export default {
   name: "Login",
@@ -86,96 +86,22 @@ export default {
       },
     };
   },
-  computed: {
-    ...mapGetters(["getTokenExpiration"]), // get token expiraton time from vuex
-  },
   methods: {
-    ...mapMutations,
+    // user is the name of the module, login and isLogged are actions inside that module
+    ...mapActions("user", ["login", "isLogged"]),
     submitForm(formName) {
-      this.$refs[formName].validate((valid) => {
-        // if it passes validation
-        if (valid) {
-          axios
-            .post("http://localhost:3000/api/user/login", {
-              email: this.ruleForm.email,
-              password: this.ruleForm.pass,
-            })
-            .then((response) => {
-              // clear all previous information form local storage
-              localStorage.clear();
-
-              // clear info in in vuex state.
-              this.$store.commit("emptySate");
-
-              // get the jwt token from the header
-              const authToken = response.headers["auth-token"];
-
-              // set auth token to the local storage.
-              localStorage.setItem("jwt", authToken);
-
-              // calculate expiration time
-              const expirationDate =
-                new Date().getTime() + this.getTokenExpiration;
-
-              // set jwtExpired in the local storage
-              localStorage.setItem("jwtExpired", expirationDate);
-
-              // we initialize books array in vuex with the help of initBooksArray method
-              this.initBooksArray(localStorage.getItem("jwt"));
-
-              // set user isLogged to true in vuex store
-              this.setLogState(true);
-
-              // redirected to the books route
-              this.$router.push({ name: "books" });
-            })
-            .catch(function (error) {
-              console.log(error);
-            });
-
-          // notify with succes message that data is succesfully sent to server.
-          this.$notify.success({
-            title: "Success",
-            message: "User succesfully logged in",
-            offset: 100,
-          });
-        } else {
-          console.log("error submit!!");
-          return false;
-        }
+      this.$refs[formName].validate(async (valid) => {
+        // dispatch login action
+        this.login({
+          valid: valid,
+          email: this.ruleForm.email,
+          password: this.ruleForm.pass,
+        });
       });
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
     },
-    initBooksArray(jwtToken) {
-      axios
-        .get("http://localhost:3000/api/books/", {
-          headers: {
-            "auth-token": jwtToken,
-          },
-        })
-        .then((response) => {
-          // initialize the books array in the vuex store with the books of the database.
-          this.$store.commit("initBooksArray", response.data);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-    },
-    setLogState(value) {
-      this.$store.commit("setLogged", value);
-    },
-  },
-  mounted() {
-    const jwtToken = localStorage.getItem("jwt"); // get token from local storage
-    const currentTime = new Date().getTime(); // get current time in milliseconds
-    const jwtTokenTime = localStorage.getItem("jwtExpired"); //get expiration time from l. storage
-    //we check if we have a token and it has not expired
-    if (jwtToken && jwtTokenTime > currentTime) {
-      // redirect to books page
-      this.$router.push({ name: "books" });
-    }
   },
 };
 </script>
